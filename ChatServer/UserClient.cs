@@ -16,6 +16,8 @@ public class UserClient : IDisposable
     private readonly CancellationTokenSource cancellationTokenSource;
     private readonly CancellationToken userCancellationToken;
 
+    private CancellationTokenSource byeSent = new();
+
     private bool isDisposed;
 
     public UserClient(IIpkClient socketClient, IChannelManager channelManager,
@@ -57,9 +59,9 @@ public class UserClient : IDisposable
         {
             while (!userCancellationToken.IsCancellationRequested)
             {
-                var responseResult = internalResponseProcessQueue.Take(userCancellationToken);
                 try
                 {
+                    var responseResult = internalResponseProcessQueue.Take(userCancellationToken);
                     await messageProcessor.ProcessMessage(responseResult, user, userCancellationToken);
 
                     if (messageProcessor.IsEndState)
@@ -72,6 +74,13 @@ public class UserClient : IDisposable
                     await SendBye();
                     await cancellationTokenSource.CancelAsync();
                 }
+                catch(OperationCanceledException){}
+            }
+
+            if (!messageProcessor.IsEndState)
+            {
+                await SendBye();
+                await byeSent.CancelAsync();
             }
         });
 
@@ -79,20 +88,25 @@ public class UserClient : IDisposable
         {
             while (!userCancellationToken.IsCancellationRequested)
             {
-                var message = await socketClient.Listen(userCancellationToken);
+                try
+                {
+                    var message = await socketClient.Listen(userCancellationToken);
 
-                internalResponseProcessQueue.Add(message!, userCancellationToken);
+                    internalResponseProcessQueue.Add(message!, userCancellationToken);    
+                }
+                catch(OperationCanceledException){}
             }
+
+
+            while (!byeSent.IsCancellationRequested)
+            {
+                await socketClient.Listen(byeSent.Token);
+            }
+            
         });
 
         await TaskExtensions.WaitForAllWithCancellationSupport([senderTask, processingTask, receiverTask]);
         Console.WriteLine("All done here");
-        if (!messageProcessor.IsEndState)
-        {
-            Console.WriteLine("Bye sent 1");
-            await SendBye();
-            Console.WriteLine("Bye sent 2");
-        }
     }
 
     public async Task ProcessReceivedMessage(Message message)
@@ -104,7 +118,9 @@ public class UserClient : IDisposable
     {
         socketClient.Dispose();
         externalMessageQueue.Dispose();
+        internalResponseProcessQueue.Dispose();
         cancellationTokenSource.Dispose();
+        byeSent.Dispose();
         isDisposed = true;
         Console.WriteLine($"Client {user.Username} is disposed");
     }
