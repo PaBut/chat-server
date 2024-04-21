@@ -105,6 +105,10 @@ public class IpkUdpClient : IIpkClient
 
         if (message.MessageType == MessageType.Unknown)
         {
+            if (message.Arguments.TryGetValue(MessageArguments.MessageId, out var messageId))
+            {
+                await SendConfirmation((ushort)messageId, cancellationToken);
+            }
             return new ResponseResult(message, ResponseProcessingResult.ParsingError);
         }
 
@@ -132,7 +136,6 @@ public class IpkUdpClient : IIpkClient
             }
 
             seenMessages.Add(messageId);
-            confirmEvent.Set();
         }
 
         return new ResponseResult(message);

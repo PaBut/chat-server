@@ -7,32 +7,27 @@ public class UdpMessageCoder
 {
     public Message DecodeMessage(byte[] message)
     {
-        if (message.Length < 1)
+        if (message.Length < 3)
         {
             return Message.UnknownMessage;
         }
 
         var messageType = UdpMessageTypeCoder.GetMessageType(message[0]);
-        var arguments = new Dictionary<MessageArguments, object>();
+        var arguments = new Dictionary<MessageArguments, object>
+        {
+            {
+                messageType == MessageType.Confirm ? MessageArguments.ReferenceMessageId : MessageArguments.MessageId,
+                BitConverter.ToUInt16(message[1..3])
+            }
+        };
 
         switch (messageType)
         {
-            case MessageType.Confirm:
-                if (message.Length < 3)
-                {
-                    return Message.UnknownMessage;
-                }
-
-                arguments.Add(MessageArguments.ReferenceMessageId, BitConverter.ToUInt16(message[1..3]));
-                
-                break;
             case MessageType.Reply:
                 if (message.Length < 8)
                 {
                     return Message.UnknownMessage;
                 }
-
-                arguments.Add(MessageArguments.MessageId, BitConverter.ToUInt16(message[1..3]));
 
                 arguments.Add(MessageArguments.ReplyStatus, message[3] == 1);
 
@@ -50,37 +45,36 @@ public class UdpMessageCoder
                     return Message.UnknownMessage;
                 }
 
-                arguments.Add(MessageArguments.MessageId, BitConverter.ToUInt16(message[1..3]));
-                
                 var usernameEnd = GetEndOfTheFloatingMessage(3, message);
 
                 arguments.Add(MessageArguments.UserName, Encoding.UTF8.GetString(message[3..usernameEnd]));
-                
+
                 var displayNameEnd1 = GetEndOfTheFloatingMessage(usernameEnd + 1, message);
 
-                arguments.Add(MessageArguments.DisplayName, Encoding.UTF8.GetString(message[(usernameEnd + 1)..displayNameEnd1]));
-                
+                arguments.Add(MessageArguments.DisplayName,
+                    Encoding.UTF8.GetString(message[(usernameEnd + 1)..displayNameEnd1]));
+
                 var secretEnd = GetEndOfTheFloatingMessage(displayNameEnd1 + 1, message);
 
-                arguments.Add(MessageArguments.Secret, Encoding.UTF8.GetString(message[(displayNameEnd1 + 1)..secretEnd]));
+                arguments.Add(MessageArguments.Secret,
+                    Encoding.UTF8.GetString(message[(displayNameEnd1 + 1)..secretEnd]));
 
                 break;
-            
+
             case MessageType.Join:
                 if (message.Length < 7)
                 {
                     return Message.UnknownMessage;
                 }
 
-                arguments.Add(MessageArguments.MessageId, BitConverter.ToUInt16(message[1..3]));
-                
                 var channelIdEnd = GetEndOfTheFloatingMessage(3, message);
 
                 arguments.Add(MessageArguments.ChannelId, Encoding.UTF8.GetString(message[3..channelIdEnd]));
-                
+
                 var displayNameEnd2 = GetEndOfTheFloatingMessage(channelIdEnd + 1, message);
 
-                arguments.Add(MessageArguments.DisplayName, Encoding.UTF8.GetString(message[(channelIdEnd + 1)..displayNameEnd2]));
+                arguments.Add(MessageArguments.DisplayName,
+                    Encoding.UTF8.GetString(message[(channelIdEnd + 1)..displayNameEnd2]));
 
                 break;
 
@@ -91,8 +85,6 @@ public class UdpMessageCoder
                     return Message.UnknownMessage;
                 }
 
-                arguments.Add(MessageArguments.MessageId, BitConverter.ToUInt16(message[1..3]));
-
                 var displayNameEnd = GetEndOfTheFloatingMessage(3, message);
 
                 arguments.Add(MessageArguments.DisplayName, Encoding.UTF8.GetString(message[3..displayNameEnd]));
@@ -102,13 +94,6 @@ public class UdpMessageCoder
                 arguments.Add(MessageArguments.MessageContent,
                     Encoding.UTF8.GetString(message[(displayNameEnd + 1)..messageContentEnd3]));
 
-                break;
-            case MessageType.Bye:
-                if (message.Length >= 3)
-                {
-                    arguments.Add(MessageArguments.MessageId, BitConverter.ToUInt16(message[1..3]));
-                }
-                
                 break;
         }
 
@@ -131,9 +116,9 @@ public class UdpMessageCoder
 
             return byteMessage.ToArray();
         }
-        
+
         byteMessage.AddRange(BitConverter.GetBytes((ushort)message.Arguments[MessageArguments.MessageId]));
-        
+
         switch (message.MessageType)
         {
             case MessageType.Err:
@@ -163,7 +148,8 @@ public class UdpMessageCoder
                 break;
             case MessageType.Reply:
                 byteMessage.AddRange(BitConverter.GetBytes((bool)message.Arguments[MessageArguments.ReplyStatus]));
-                byteMessage.AddRange(BitConverter.GetBytes((ushort)message.Arguments[MessageArguments.ReferenceMessageId]));
+                byteMessage.AddRange(
+                    BitConverter.GetBytes((ushort)message.Arguments[MessageArguments.ReferenceMessageId]));
                 byteMessage.AddRange(
                     Encoding.UTF8.GetBytes((string)message.Arguments[MessageArguments.MessageContent]));
                 byteMessage.Add(0);
@@ -171,7 +157,7 @@ public class UdpMessageCoder
             case MessageType.Bye:
                 break;
         }
-        
+
         return byteMessage.ToArray();
     }
 
