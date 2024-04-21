@@ -79,6 +79,10 @@ public class TcpMessageCoder
 
         if (messageType == MessageType.Msg || messageType == MessageType.Err)
         {
+            if (messageParts.Length < 5)
+            {
+                return Message.UnknownMessage;
+            }
             messageArguments.Add(MessageArguments.DisplayName, messageParts[2]);
 
             if (messageParts[3] != "IS")
@@ -90,6 +94,10 @@ public class TcpMessageCoder
         }
         else if (messageType == MessageType.Auth)
         {
+            if (messageParts.Length != 6)
+            {
+                return Message.UnknownMessage;
+            }
             messageArguments.Add(MessageArguments.UserName, messageParts[1]);
             if (messageParts[2] != "AS")
             {
@@ -104,6 +112,10 @@ public class TcpMessageCoder
         }
         else if (messageType == MessageType.Join)
         {
+            if (messageParts.Length != 4)
+            {
+                return Message.UnknownMessage;
+            }
             messageArguments.Add(MessageArguments.ChannelId, messageParts[1]);
             if(messageParts[2] != "AS")
             {
@@ -113,6 +125,11 @@ public class TcpMessageCoder
         }
         else if (messageType == MessageType.Reply)
         {
+            if (messageParts.Length < 4)
+            {
+                return Message.UnknownMessage;
+            }
+            
             if (messageParts[1] != "OK" && messageParts[1] != "NOK")
             {
                 return Message.UnknownMessage;
@@ -126,12 +143,6 @@ public class TcpMessageCoder
             }
 
             messageArguments.Add(MessageArguments.MessageContent, string.Join(' ', messageParts[3..]));
-        }
-        else if (messageString.Contains(CLRF) &&
-                 messageString.Split(CLRF).Contains(TcpMessageTypeCoder.GetMessageString(MessageType.Bye)))
-        {
-            Console.Write($"Server: {messageString}");
-            messageType = MessageType.Bye;
         }
         else if (messageType != MessageType.Bye)
         {

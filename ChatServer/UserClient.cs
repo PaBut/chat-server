@@ -98,7 +98,7 @@ public class UserClient : IDisposable
             }
 
 
-            while (!byeSent.IsCancellationRequested)
+            while (!messageProcessor.IsEndState && !byeSent.IsCancellationRequested)
             {
                 await socketClient.Listen(byeSent.Token);
             }
