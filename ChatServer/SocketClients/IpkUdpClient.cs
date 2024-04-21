@@ -95,11 +95,7 @@ public class IpkUdpClient : IIpkClient
 
     public async Task<ResponseResult?> Listen(CancellationToken cancellationToken = default)
     {
-        Console.WriteLine("Start receiving message");
-
         var response = await client.ReceiveAsync(cancellationToken);
-
-        Console.WriteLine("Received message");
 
         var message = messageCoder.DecodeMessage(response.Buffer);
 
@@ -147,9 +143,9 @@ public class IpkUdpClient : IIpkClient
         {
             var messageId = currentMessageId++;
 
-            message.Arguments[MessageArguments.MessageId] = messageId;   
+            message.Arguments[MessageArguments.MessageId] = messageId;
         }
-        
+
         await SendWithRetrial(message, cancellationToken);
     }
 
@@ -167,35 +163,23 @@ public class IpkUdpClient : IIpkClient
             logger.LogSentMessage(message, remoteEndPoint!);
             await client.SendAsync(byteMessage, byteMessage.Length, remoteEndPoint);
 
-            // using CancellationTokenSource cts = new(timeout);
-            // using CancellationTokenSource tokenSource =
-            //     CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
-
-            try
+            var isDisposed = false;
+            var task = Task.Run(() =>
             {
-                var mustBeDisposed = false;
-                var task = Task.Run(() =>
+                while (!confirmedMessages.Contains(messageId) && !isDisposed)
                 {
-                    while (!confirmedMessages.Contains(messageId) && !mustBeDisposed)
-                    {
-                        confirmEvent.WaitOne();
-                        confirmEvent.Reset();
-                    }
-                }, cancellationToken);
+                    confirmEvent.WaitOne();
+                    confirmEvent.Reset();
+                }
+            }, cancellationToken);
 
-                await Task.WhenAny(task, Task.Delay(timeout, cancellationToken));
-                confirmEvent.Set();
-                mustBeDisposed = true;
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Cancelled");
-            }
+            await Task.WhenAny(task, Task.Delay(timeout, cancellationToken));
+            confirmEvent.Set();
+            isDisposed = true;
         }
 
         if (!confirmedMessages.Contains(messageId))
         {
-            Console.WriteLine($"Not confirmed message in client {remoteEndPoint.Port}");
             throw new NotReceivedConfirmException();
         }
     }

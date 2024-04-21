@@ -21,24 +21,11 @@ public class TcpMessageCoder
 
         if (message.MessageType == MessageType.Join)
         {
-            // if (!message.Arguments.ContainsKey(MessageArguments.ChannelId) &&
-            //     !message.Arguments.ContainsKey(MessageArguments.DisplayName))
-            // {
-            //     // Error
-            // }
-
             messageString += (string)message.Arguments[MessageArguments.ChannelId] + " AS " +
                              (string)message.Arguments[MessageArguments.DisplayName];
         }
         else if (message.MessageType == MessageType.Auth)
         {
-            if (!message.Arguments.ContainsKey(MessageArguments.UserName) &&
-                !message.Arguments.ContainsKey(MessageArguments.DisplayName) &&
-                !message.Arguments.ContainsKey(MessageArguments.Secret))
-            {
-                // Error
-            }
-
             messageString += (string)message.Arguments[MessageArguments.UserName] + " AS " +
                              (string)message.Arguments[MessageArguments.DisplayName] + " USING " +
                              (string)message.Arguments[MessageArguments.Secret];
@@ -63,7 +50,6 @@ public class TcpMessageCoder
 
     public Message DecodeMessage(string messageString)
     {
-        // Console.Write($"////////////Server(decoded): {messageString}");
         string[] messageParts = messageString.Split(" ");
 
         var stringMessageType = messageParts[0];

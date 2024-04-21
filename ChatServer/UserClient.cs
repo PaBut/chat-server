@@ -18,8 +18,6 @@ public class UserClient : IDisposable
 
     private CancellationTokenSource byeSent = new();
 
-    private bool isDisposed;
-
     public UserClient(IIpkClient socketClient, IChannelManager channelManager,
         IAuthenticationService authenticationService, CancellationToken serverCancellationToken)
     {
@@ -106,7 +104,6 @@ public class UserClient : IDisposable
         });
 
         await TaskExtensions.WaitForAllWithCancellationSupport([senderTask, processingTask, receiverTask]);
-        Console.WriteLine("All done here");
     }
 
     public async Task ProcessReceivedMessage(Message message)
@@ -121,7 +118,6 @@ public class UserClient : IDisposable
         internalResponseProcessQueue.Dispose();
         cancellationTokenSource.Dispose();
         byeSent.Dispose();
-        isDisposed = true;
         Console.WriteLine($"Client {user.Username} is disposed");
     }
 
