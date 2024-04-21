@@ -24,6 +24,8 @@ public class IpkUdpClient : IIpkClient
     private List<ushort> confirmedMessages = new();
     private ManualResetEvent confirmEvent = new(false);
 
+    private readonly object messageIdLocker = new object();
+
     public IpkUdpClient(IUdpClientProxy client, IPEndPoint? endpoint, IPAddress listeningAddress, byte retrials,
         ushort timeout, ILogger logger)
     {
@@ -138,9 +140,12 @@ public class IpkUdpClient : IIpkClient
 
     public async Task Send(Message message, CancellationToken cancellationToken = default)
     {
-        var messageId = currentMessageId++;
+        lock (messageIdLocker)
+        {
+            var messageId = currentMessageId++;
 
-        message.Arguments[MessageArguments.MessageId] = messageId;
+            message.Arguments[MessageArguments.MessageId] = messageId;   
+        }
         
         await SendWithRetrial(message, cancellationToken);
     }

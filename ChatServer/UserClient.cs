@@ -42,25 +42,36 @@ public class UserClient : IDisposable
             {
                 try
                 {
-                    if (internalResponseProcessQueue.TryTake(out var responseResult))
-                    {
-                        await messageProcessor.ProcessMessage(responseResult, user, userCancellationToken);
-
-                        if (messageProcessor.IsEndState)
-                        {
-                            await cancellationTokenSource.CancelAsync();
-                        }
-                    }
-                    else if(externalMessageQueue.TryTake(out var message))
-                    {
-                        await socketClient.Send(message, userCancellationToken);
-                    }
+                    var message = externalMessageQueue.Take(userCancellationToken);
+                    await socketClient.Send(message, userCancellationToken);
                 }
                 catch (NotReceivedConfirmException ex)
                 {
                     await SendBye();
                     await cancellationTokenSource.CancelAsync();
-                }                
+                }
+            }
+        });
+
+        var processingTask = Task.Run(async () =>
+        {
+            while (!userCancellationToken.IsCancellationRequested)
+            {
+                var responseResult = internalResponseProcessQueue.Take(userCancellationToken);
+                try
+                {
+                    await messageProcessor.ProcessMessage(responseResult, user, userCancellationToken);
+
+                    if (messageProcessor.IsEndState)
+                    {
+                        await cancellationTokenSource.CancelAsync();
+                    }
+                }
+                catch (NotReceivedConfirmException)
+                {
+                    await SendBye();
+                    await cancellationTokenSource.CancelAsync();
+                }
             }
         });
 
@@ -74,21 +85,13 @@ public class UserClient : IDisposable
             }
         });
 
-        try
+        await TaskExtensions.WaitForAllWithCancellationSupport([senderTask, processingTask, receiverTask]);
+        Console.WriteLine("All done here");
+        if (!messageProcessor.IsEndState)
         {
-            await Task.WhenAll(senderTask, receiverTask);
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        finally
-        {
-            if (!messageProcessor.IsEndState)
-            {
-                Console.WriteLine("Bye sent 1");
-                await SendBye();
-                Console.WriteLine("Bye sent 2");
-            }
+            Console.WriteLine("Bye sent 1");
+            await SendBye();
+            Console.WriteLine("Bye sent 2");
         }
     }
 
@@ -112,6 +115,8 @@ public class UserClient : IDisposable
         {
             await socketClient.Leave();
         }
-        catch(NotReceivedConfirmException){}
+        catch (NotReceivedConfirmException)
+        {
+        }
     }
 }
