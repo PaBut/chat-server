@@ -6,6 +6,7 @@ using ChatServer.Logging;
 using ChatServer.Models;
 using ChatServer.SocketClients.Utilities.Tcp;
 using ChatServer.Utilities.Tcp;
+using SocketType = ChatServer.Enums.SocketType;
 
 namespace ChatServer.SocketClients;
 
@@ -36,6 +37,8 @@ public class IpkTcpClient : IIpkClient
         messageCoder = new TcpMessageCoder();
         messageQueue = new TcpMessageQueue(messageCoder);
     }
+
+    public SocketType SocketType { get; init; } = SocketType.Tcp;
 
     public async Task SendMessage(string messageContent, string senderUsername, CancellationToken cancellationToken = default)
     {

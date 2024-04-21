@@ -1,5 +1,7 @@
 ﻿using System.Net;
+using System.Net.Sockets;
 using ChatServer;
+using ChatServer.Core;
 using ChatServer.Models;
 using CommandLine;
 using CommandLine.Text;
@@ -34,6 +36,11 @@ Console.CancelKeyPress += (sender, args) =>
     args.Cancel = true;
 };
 
-var server = new ServerListener(ipAddress, commandLineOptions.Port, commandLineOptions.UdpConfirmationAttempts,
+using var server = new ServerListener(ipAddress, commandLineOptions.Port, commandLineOptions.UdpConfirmationAttempts,
     commandLineOptions.UdpConfirmationTimeout);
 await server.StartListeningAsync(cancellationTokenSource.Token);
+
+if (server.IsInternalError)
+{
+    Environment.ExitCode = 1;
+}

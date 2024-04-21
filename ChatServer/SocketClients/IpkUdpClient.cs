@@ -40,6 +40,8 @@ public class IpkUdpClient : IIpkClient
         this.listeningAddress = listeningAddress;
     }
 
+    public SocketType SocketType { get; init; } = SocketType.Udp;
+
     public async Task SendMessage(string messageContent, string senderUsername,
         CancellationToken cancellationToken = default)
     {
@@ -108,6 +110,7 @@ public class IpkUdpClient : IIpkClient
             {
                 await SendConfirmation((ushort)messageId, cancellationToken);
             }
+
             return new ResponseResult(message, ResponseProcessingResult.ParsingError);
         }
 
@@ -210,19 +213,12 @@ public class IpkUdpClient : IIpkClient
         client.Dispose();
     }
 
-    public static IpkUdpClient? Create(IPAddress listeningAddress, ushort port, ILogger logger, byte retrials,
+    public static IpkUdpClient Create(IPAddress listeningAddress, ushort port, ILogger logger, byte retrials,
         ushort timeout)
     {
-        try
-        {
-            var client = new UdpClient();
-            client.Client.Bind(new IPEndPoint(listeningAddress, port));
+        var client = new UdpClient();
+        client.Client.Bind(new IPEndPoint(listeningAddress, port));
 
-            return new IpkUdpClient(new UdpClientProxy(client), null, listeningAddress, retrials, timeout, logger);
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        return new IpkUdpClient(new UdpClientProxy(client), null, listeningAddress, retrials, timeout, logger);
     }
 }

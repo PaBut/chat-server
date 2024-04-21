@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using ChatServer.Core.Client;
 using ChatServer.Core.Services;
 using ChatServer.Enums;
+using ChatServer.Exceptions;
 using ChatServer.Infrastructure;
 using ChatServer.Logging;
 using ChatServer.Logging.Utilities;
@@ -10,37 +11,39 @@ using ChatServer.Models;
 using ChatServer.SocketClients;
 using TaskExtensions = ChatServer.Extensions.TaskExtensions;
 
-namespace ChatServer;
+namespace ChatServer.Core;
 
-public class ServerListener
+public class ServerListener : IDisposable
 {
-    private readonly IPAddress ListeningAddress;
-    private readonly ushort ListeningPort;
+    private readonly IPAddress listeningAddress;
+    private readonly ushort listeningPort;
     private readonly byte udpConfirmationAttempts;
     private readonly ushort udpConfirmationTimeout;
     private readonly IChannelManager channelManager = new ChannelManager();
+    private readonly CancellationTokenSource errorCancellationTokenSource = new();
 
     private readonly IList<Task> tasks = new List<Task>();
-    private readonly IList<UserClient> userClients = new List<UserClient>();
 
     private readonly IAuthenticationService authenticationService = new AuthenticationService();
     private readonly ILogger logger = new Logger(new StdoutWriter());
 
+    public bool IsInternalError { get; set; } = false;
+    
     public ServerListener(IPAddress listeningAddress, ushort listeningPort, byte udpConfirmationAttempts,
         ushort udpConfirmationTimeout)
     {
-        ListeningAddress = listeningAddress;
-        ListeningPort = listeningPort;
+        this.listeningAddress = listeningAddress;
+        this.listeningPort = listeningPort;
         this.udpConfirmationAttempts = udpConfirmationAttempts;
         this.udpConfirmationTimeout = udpConfirmationTimeout;
     }
 
     public async Task StartListeningAsync(CancellationToken cancellationToken = default)
     {
-        Console.WriteLine($"Server is listening on {ListeningAddress}:{ListeningPort}");
-
-        var tcpListener = Task.Run(() => TcpListen(cancellationToken));
-        var udpListener = Task.Run(() => UdpListen(cancellationToken));
+        var cancellationTokenSource =
+            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, errorCancellationTokenSource.Token);
+        var tcpListener = Task.Run(() => TcpListen(cancellationTokenSource.Token));
+        var udpListener = Task.Run(() => UdpListen(cancellationTokenSource.Token));
 
         var serverTasks = tasks.Union(new[] { tcpListener, udpListener });
 
@@ -49,9 +52,18 @@ public class ServerListener
 
     private async Task TcpListen(CancellationToken cancellationToken = default)
     {
-        using TcpListener listener = new TcpListener(ListeningAddress, ListeningPort);
-        listener.Start();
-        
+        using TcpListener listener = new TcpListener(listeningAddress, listeningPort);
+        try
+        {
+            listener.Start();
+        }
+        catch (SocketException)
+        {
+            IsInternalError = true;
+            await errorCancellationTokenSource.CancelAsync();
+            return;
+        }
+
         while (!cancellationToken.IsCancellationRequested)
         {
             TcpClient client = await listener.AcceptTcpClientAsync(cancellationToken);
@@ -61,6 +73,7 @@ public class ServerListener
             {
                 continue;
             }
+
             await ProcessRequest(ipkTcpClient, result, cancellationToken);
         }
     }
@@ -69,16 +82,22 @@ public class ServerListener
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var ipkUdpClient = IpkUdpClient.Create(ListeningAddress, ListeningPort, logger, udpConfirmationAttempts,
-                udpConfirmationTimeout);
-            if (ipkUdpClient == null)
-            {
-                // TODO: Rewrite this logic
-                throw new NullReferenceException();
-            }
+            IpkUdpClient ipkUdpClient;
 
-            var result = await ipkUdpClient.Listen(cancellationToken);
+            try
+            {
+                ipkUdpClient = IpkUdpClient.Create(listeningAddress, listeningPort, logger, udpConfirmationAttempts,
+                    udpConfirmationTimeout);
+            }
+            catch (SocketException)
+            {
+                IsInternalError = true;
+                await errorCancellationTokenSource.CancelAsync();
+                return;
+            }
             
+            var result = await ipkUdpClient.Listen(cancellationToken);
+
             ipkUdpClient.RandomizePort();
             await ProcessRequest(ipkUdpClient, result!, cancellationToken);
         }
@@ -91,9 +110,37 @@ public class ServerListener
              && response.ProcessingResult != ResponseProcessingResult.AlreadyProcessed)
             || response.Message.MessageType != MessageType.Auth)
         {
-            await socketClient.SendError("Invalid message format", cancellationToken);
-            await socketClient.Leave();
-            socketClient.Dispose();
+            bool socketException = false;
+            try
+            {
+                await socketClient.SendError("Invalid message format", cancellationToken);
+            }
+            catch (NotReceivedConfirmException)
+            {
+            }
+            catch (SocketException)
+            {
+                socketException = true;
+            }
+            finally
+            {
+                if (!socketException)
+                {
+                    try
+                    {
+                        await socketClient.Leave();
+                    }
+                    catch (NotReceivedConfirmException)
+                    {
+                    }
+                    catch (SocketException)
+                    {
+                    }
+                }
+
+                socketClient.Dispose();
+            }
+
             return;
         }
 
@@ -103,7 +150,11 @@ public class ServerListener
             await client.Start();
             client.Dispose();
         }));
-        await client.ProcessReceivedMessage(response.Message);
-        userClients.Add(client);
+        client.ProcessReceivedMessage(response.Message);
+    }
+
+    public void Dispose()
+    {
+        errorCancellationTokenSource.Dispose();
     }
 }

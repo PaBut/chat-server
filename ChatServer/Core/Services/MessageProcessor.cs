@@ -12,7 +12,7 @@ namespace ChatServer.Core.Services;
 public class MessageProcessor : IMessageProcessor
 {
     private const string ServerName = "Server";
-    private const string DefaultChannelName = "Default";
+    private const string DefaultChannelName = "default";
 
     private readonly IAuthenticationService authenticationService;
     private readonly IChannelManager channelManager;
