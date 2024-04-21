@@ -93,7 +93,11 @@ public class IpkUdpClient : IIpkClient
 
     public async Task<ResponseResult?> Listen(CancellationToken cancellationToken = default)
     {
+        Console.WriteLine("Start receiving message");
+
         var response = await client.ReceiveAsync(cancellationToken);
+
+        Console.WriteLine("Received message");
 
         var message = messageCoder.DecodeMessage(response.Buffer);
 
@@ -184,7 +188,7 @@ public class IpkUdpClient : IIpkClient
         if (!confirmedMessages.Contains(messageId))
         {
             Console.WriteLine($"Not confirmed message in client {remoteEndPoint.Port}");
-            //throw new NotReceivedConfirmException();
+            throw new NotReceivedConfirmException();
         }
     }
 

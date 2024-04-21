@@ -10,6 +10,8 @@ class ChannelManager : IChannelManager
     {
         channels = new List<Channel>();
     }
+
+    private bool ChannelExists(string channelId) => channels.Any(c => c.Name == channelId);
     
     public void AddChannel(string channelId)
     {
@@ -18,7 +20,7 @@ class ChannelManager : IChannelManager
 
     public void RemoveChannel(string channelId)
     {
-        if (channels.Any(c => c.Name == channelId))
+        if (ChannelExists(channelId))
         {
             channels.Remove(channels.First(c => c.Name == channelId));
         }
@@ -32,7 +34,7 @@ class ChannelManager : IChannelManager
     public void AddUserToChannel(User user, string channelId)
     {
         
-        if (!channels.Any(channel => channel.Name == channelId))
+        if (!ChannelExists(channelId))
         {
             AddChannel(channelId);
         }
@@ -42,12 +44,13 @@ class ChannelManager : IChannelManager
 
     public void RemoveUserFromChannel(User user, string channelId)
     {
-       var channel = GetChannel(channelId);
+        var channel = GetChannel(channelId);
+        channel?.RemoveUser(user);
+    }
 
-       if (channel != null)
-       {
-           channel.RemoveUser(user);
-       }
+    public IEnumerable<User> GetAllUsers()
+    {
+        return channels.SelectMany(c => c.Users);
     }
 
     public async Task SendToChannel(string channelId, string? senderUsername, Message message)

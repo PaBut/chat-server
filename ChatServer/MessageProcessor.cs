@@ -15,6 +15,8 @@ public class MessageProcessor : IMessageProcessor
     private readonly IIpkClient ipkClient;
     private readonly User user;
 
+    private readonly MessageValidator messageValidator = new MessageValidator();
+
     public MessageProcessor(IAuthenticationService authenticationService, IChannelManager channelManager,
         IIpkClient ipkClient, User user)
     {
@@ -35,29 +37,26 @@ public class MessageProcessor : IMessageProcessor
         if (request.ProcessingResult == ResponseProcessingResult.ParsingError ||
             request.Message.MessageType == MessageType.Unknown)
         {
-            await ipkClient.SendError("Invalid message type", cancellationToken);
+            await SendErrorAndBye("Could not parse sent message", cancellationToken);
         }
 
         var message = request.Message;
-        // if (!workflowGraph.IsAllowedMessageType(message.MessageType))
-        // {
-        //     await ipkClient.SendError("Invalid message type for this state", cancellationToken);
-        //     return;
-        // }
-
-        // Wrong approach
-        workflowGraph.NextState(message.MessageType);
-
+        if (!workflowGraph.IsAllowedMessageType(message.MessageType))
+        {
+            await SendErrorAndBye("Invalid message for current state", cancellationToken);
+            return;
+        }
+        
         switch (message.MessageType)
         {
             case MessageType.Auth:
-                await ProcessAuthMessage(message);
+                await ProcessAuthMessage(message, cancellationToken);
                 break;
             case MessageType.Msg:
-                await ProcessMsgMessage(message);
+                await ProcessMsgMessage(message, cancellationToken);
                 break;
             case MessageType.Join:
-                await ProcessJoinMessage(message);
+                await ProcessJoinMessage(message, cancellationToken);
                 break;
             case MessageType.Bye:
                 await ProcessByeMessage();
@@ -72,13 +71,15 @@ public class MessageProcessor : IMessageProcessor
 
     private async Task ProcessErrMessage(Message message)
     {
-        await ipkClient.Leave();
         await ProcessByeMessage();
+        await SendBye();
+        workflowGraph.NextState(MessageType.Err, MessageType.Bye);
     }
 
     private async Task ProcessByeMessage()
     {
         await ChannelExit();
+        workflowGraph.NextState(MessageType.Bye);
     }
 
     private async Task ChannelExit()
@@ -91,7 +92,7 @@ public class MessageProcessor : IMessageProcessor
                 { MessageArguments.DisplayName, ServerName },
                 {
                     MessageArguments.MessageContent,
-                    $"{user.DisplayName} has left the {user.Channel.Name}"
+                    $"{user.DisplayName} has left the {user.Channel!.Name}"
                 }
             }
         });
@@ -118,8 +119,15 @@ public class MessageProcessor : IMessageProcessor
         });
     }
 
-    private async Task ProcessJoinMessage(Message message)
+    private async Task ProcessJoinMessage(Message message, CancellationToken cancellationToken = default)
     {
+        if (!messageValidator.IsValid(message))
+        {
+            await ipkClient.SendReply(false, "Sent join request is not valid", message, cancellationToken);
+            workflowGraph.NextState(MessageType.Join, MessageType.Reply, false);
+            return;
+        }
+
         if (user.Channel != null)
         {
             await ChannelExit();
@@ -127,19 +135,45 @@ public class MessageProcessor : IMessageProcessor
 
         var channelId = (string)message.Arguments[MessageArguments.ChannelId];
 
-        await ipkClient.SendReply(true, "Channel joined successfully", message);
+        await ipkClient.SendReply(true, "Channel joined successfully", message, cancellationToken);
 
         await ChannelJoin(channelId);
+        workflowGraph.NextState(MessageType.Join, MessageType.Reply, true);
     }
 
-    private async Task ProcessMsgMessage(Message message)
+    private async Task ProcessMsgMessage(Message message, CancellationToken cancellationToken = default)
     {
+        if (!messageValidator.IsValid(message))
+        {
+            await SendErrorAndBye("Sent message is not valid", cancellationToken);
+            return;
+        }
+
         await channelManager.SendToChannel(user.Channel!.Name, user.Username!, message);
+
+        workflowGraph.NextState(MessageType.Msg);
     }
 
-    private async Task ProcessAuthMessage(Message message)
+    private async Task ProcessAuthMessage(Message message, CancellationToken cancellationToken = default)
     {
-        var success = authenticationService.Authenticate((string)message.Arguments[MessageArguments.UserName],
+        if (!messageValidator.IsValid(message))
+        {
+            await ipkClient.SendReply(false, "Sent authentication request is not valid", message, cancellationToken);
+            workflowGraph.NextState(MessageType.Auth, MessageType.Reply, false);
+            return;
+        }
+
+        var username = (string)message.Arguments[MessageArguments.UserName];
+
+        if (channelManager.GetAllUsers().Select(u => u.Username).Contains(username))
+        {
+            await ipkClient.SendReply(false, "User with provided username is already authenticated", message,
+                cancellationToken);
+            workflowGraph.NextState(MessageType.Auth, MessageType.Reply, false);
+            return;
+        }
+
+        var success = authenticationService.Authenticate(username,
             (string)message.Arguments[MessageArguments.Secret]);
 
         string messageContent;
@@ -153,7 +187,7 @@ public class MessageProcessor : IMessageProcessor
             messageContent = "Authentication failed";
         }
 
-        await ipkClient.SendReply(success, messageContent, message);
+        await ipkClient.SendReply(success, messageContent, message, cancellationToken);
 
 
         if (success)
@@ -163,5 +197,23 @@ public class MessageProcessor : IMessageProcessor
 
             await ChannelJoin(DefaultChannelName);
         }
+
+        workflowGraph.NextState(MessageType.Auth, MessageType.Reply, success);
+    }
+
+    private async Task SendErrorAndBye(string errorText, CancellationToken cancellationToken = default)
+    {
+        await ipkClient.SendError(errorText, cancellationToken);
+        await SendBye();
+        workflowGraph.NextState(MessageType.Err, MessageType.Bye);
+    }
+
+    private async Task SendBye()
+    {
+        try
+        {
+            await ipkClient.Leave();
+        }
+        catch (NotReceivedConfirmException) { }
     }
 }

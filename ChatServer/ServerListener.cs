@@ -35,11 +35,21 @@ public class ServerListener
         var tcpListener = Task.Run(() => TcpListen(cancellationToken));
         var udpListener = Task.Run(() => UdpListen(cancellationToken));
 
-        try
+        var serverTasks = tasks.Union(new[] { tcpListener, udpListener });
+        
+        bool leftToDispose = true;
+        while (leftToDispose)
         {
-            await Task.WhenAll(tasks.Union(new[] { tcpListener, udpListener }));
+            leftToDispose = false;
+            try
+            {
+                await Task.WhenAll(serverTasks.Where(t => !t.IsCompleted));
+            }
+            catch (OperationCanceledException)
+            {
+                leftToDispose = true;
+            }   
         }
-        catch (OperationCanceledException) {}
     }
 
     private async Task TcpListen(CancellationToken cancellationToken = default)
