@@ -97,7 +97,7 @@ public class MessageProcessor : IMessageProcessor
                 { MessageArguments.DisplayName, ServerName },
                 {
                     MessageArguments.MessageContent,
-                    $"{user.DisplayName} has left the {user.Channel!.Name}."
+                    $"{user.DisplayName} has left {user.Channel!.Name}."
                 }
             }
         });
@@ -118,7 +118,7 @@ public class MessageProcessor : IMessageProcessor
                 { MessageArguments.DisplayName, ServerName },
                 {
                     MessageArguments.MessageContent,
-                    $"{user.DisplayName} has joined the {channelId}."
+                    $"{user.DisplayName} has joined {channelId}."
                 }
             }
         });
