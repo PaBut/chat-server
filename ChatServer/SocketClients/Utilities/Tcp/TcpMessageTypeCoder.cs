@@ -1,3 +1,4 @@
+using ChatServer.Enums;
 using ChatServer.Models;
 
 namespace ChatServer.Utilities.Tcp;

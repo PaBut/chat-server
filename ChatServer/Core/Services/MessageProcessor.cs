@@ -1,8 +1,13 @@
+using ChatServer.Core.Client;
+using ChatServer.Enums;
+using ChatServer.Exceptions;
+using ChatServer.Infrastructure;
 using ChatServer.Models;
+using ChatServer.Models.Validation;
 using ChatServer.SocketClients;
 using ChatServer.Utilities;
 
-namespace ChatServer;
+namespace ChatServer.Core.Services;
 
 public class MessageProcessor : IMessageProcessor
 {

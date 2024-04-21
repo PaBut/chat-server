@@ -1,4 +1,5 @@
 using System.Net;
+using ChatServer.Core.Client;
 
 namespace ChatServer.Models;
 

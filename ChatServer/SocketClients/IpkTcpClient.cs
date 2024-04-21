@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 using ChatClient.SocketClients;
+using ChatServer.Enums;
+using ChatServer.Logging;
 using ChatServer.Models;
 using ChatServer.SocketClients.Utilities.Tcp;
 using ChatServer.Utilities.Tcp;

@@ -1,6 +1,6 @@
-using ChatServer.Models;
+using ChatServer.Enums;
 
-namespace ChatServer.Utilities;
+namespace ChatServer.Core.Client;
 
 public class WorkflowGraph
 {

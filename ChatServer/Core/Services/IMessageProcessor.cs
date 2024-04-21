@@ -1,7 +1,6 @@
-using System.Collections.Concurrent;
 using ChatServer.Models;
 
-namespace ChatServer;
+namespace ChatServer.Core.Services;
 
 public interface IMessageProcessor
 {

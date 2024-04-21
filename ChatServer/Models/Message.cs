@@ -1,3 +1,5 @@
+using ChatServer.Enums;
+
 namespace ChatServer.Models;
 
 public class Message

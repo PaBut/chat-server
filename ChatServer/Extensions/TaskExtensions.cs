@@ -1,4 +1,4 @@
-namespace ChatServer;
+namespace ChatServer.Extensions;
 
 public class TaskExtensions
 {

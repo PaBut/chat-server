@@ -1,4 +1,4 @@
-namespace ChatServer;
+namespace ChatServer.Enums;
 
 public enum ClientState
 {

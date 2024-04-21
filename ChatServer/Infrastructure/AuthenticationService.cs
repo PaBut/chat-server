@@ -1,4 +1,4 @@
-namespace ChatServer;
+namespace ChatServer.Infrastructure;
 
 public class AuthenticationService : IAuthenticationService
 {

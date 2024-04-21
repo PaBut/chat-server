@@ -1,4 +1,4 @@
-namespace ChatServer;
+namespace ChatServer.Logging.Utilities;
 
 public class StdoutWriter : IStdoutWriter
 {

@@ -1,4 +1,4 @@
-namespace ChatServer.SocketClients;
+namespace ChatServer.Exceptions;
 
 public class NotReceivedConfirmException : Exception
 {

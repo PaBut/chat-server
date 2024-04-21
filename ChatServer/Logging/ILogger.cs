@@ -1,7 +1,7 @@
 using System.Net;
 using ChatServer.Models;
 
-namespace ChatServer;
+namespace ChatServer.Logging;
 
 public interface ILogger
 {

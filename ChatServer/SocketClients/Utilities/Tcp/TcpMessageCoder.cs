@@ -1,4 +1,5 @@
 using System.Text;
+using ChatServer.Enums;
 using ChatServer.Models;
 using ChatServer.Utilities.Tcp;
 

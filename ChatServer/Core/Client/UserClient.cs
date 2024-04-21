@@ -1,9 +1,12 @@
 using System.Collections.Concurrent;
+using ChatServer.Core.Services;
+using ChatServer.Exceptions;
+using ChatServer.Infrastructure;
 using ChatServer.Models;
 using ChatServer.SocketClients;
-using ChatServer.Utilities;
+using TaskExtensions = ChatServer.Extensions.TaskExtensions;
 
-namespace ChatServer;
+namespace ChatServer.Core.Client;
 
 public class UserClient : IDisposable
 {

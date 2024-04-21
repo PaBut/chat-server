@@ -1,6 +1,6 @@
 using ChatServer.Models;
 
-namespace ChatServer;
+namespace ChatServer.Core.Services;
 
 class ChannelManager : IChannelManager
 {
