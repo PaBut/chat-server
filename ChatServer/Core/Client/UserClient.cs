@@ -71,7 +71,7 @@ public class UserClient : IDisposable
                 try
                 {
                     var responseResult = internalResponseProcessQueue.Take(userCancellationToken);
-                    await messageProcessor.ProcessMessage(responseResult, user, userCancellationToken);
+                    await messageProcessor.ProcessMessage(responseResult, userCancellationToken);
 
                     if (messageProcessor.IsEndState)
                     {
@@ -146,7 +146,6 @@ public class UserClient : IDisposable
         internalResponseProcessQueue.Dispose();
         cancellationTokenSource.Dispose();
         byeSentTokenSource.Dispose();
-        Console.WriteLine($"Client {user.Username} is disposed");
     }
 
     private async Task SendBye()

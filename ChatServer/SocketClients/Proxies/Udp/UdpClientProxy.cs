@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace ChatClient.SocketClients.Proxies.Udp;
+namespace ChatServer.SocketClients.Proxies.Udp;
 
 public class UdpClientProxy : IUdpClientProxy
 {

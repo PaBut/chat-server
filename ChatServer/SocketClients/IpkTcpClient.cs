@@ -1,11 +1,10 @@
 using System.Net;
 using System.Net.Sockets;
-using ChatClient.SocketClients;
 using ChatServer.Enums;
 using ChatServer.Logging;
 using ChatServer.Models;
+using ChatServer.SocketClients.Proxies.Tcp;
 using ChatServer.SocketClients.Utilities.Tcp;
-using ChatServer.Utilities.Tcp;
 using SocketType = ChatServer.Enums.SocketType;
 
 namespace ChatServer.SocketClients;

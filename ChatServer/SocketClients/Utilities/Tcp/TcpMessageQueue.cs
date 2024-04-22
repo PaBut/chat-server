@@ -1,8 +1,7 @@
 using System.Text;
 using ChatServer.Models;
-using ChatServer.SocketClients.Utilities.Tcp;
 
-namespace ChatServer.Utilities.Tcp;
+namespace ChatServer.SocketClients.Utilities.Tcp;
 
 public class TcpMessageQueue
 {

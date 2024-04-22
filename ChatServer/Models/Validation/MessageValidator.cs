@@ -46,14 +46,4 @@ public class MessageValidator
 
         return true;
     }
-    
-    public bool ValidateArgument(MessageArguments argument, string value)
-    {
-        if (maximalLengths.TryGetValue(argument, out var validationItem))
-        {
-            return validationItem.ValidateItem(value);
-        }
-
-        return false;
-    }
 }

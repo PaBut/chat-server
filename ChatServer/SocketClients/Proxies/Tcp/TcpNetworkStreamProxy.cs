@@ -1,6 +1,6 @@
 using System.Net.Sockets;
 
-namespace ChatClient.SocketClients;
+namespace ChatServer.SocketClients.Proxies.Tcp;
 
 public class TcpNetworkStreamProxy : ITcpNetworkWriterProxy
 {

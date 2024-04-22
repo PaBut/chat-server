@@ -1,4 +1,4 @@
-namespace ChatClient.SocketClients;
+namespace ChatServer.SocketClients.Proxies.Tcp;
 
 public interface ITcpNetworkWriterProxy : IDisposable, IAsyncDisposable
 {

@@ -5,7 +5,6 @@ using ChatServer.Infrastructure;
 using ChatServer.Models;
 using ChatServer.Models.Validation;
 using ChatServer.SocketClients;
-using ChatServer.Utilities;
 
 namespace ChatServer.Core.Services;
 
@@ -31,7 +30,7 @@ public class MessageProcessor : IMessageProcessor
         this.user = user;
     }
 
-    public async Task ProcessMessage(ResponseResult request, User user, CancellationToken cancellationToken = default)
+    public async Task ProcessMessage(ResponseResult request, CancellationToken cancellationToken = default)
     {
         if (request.ProcessingResult == ResponseProcessingResult.AlreadyProcessed ||
             request.Message.MessageType == MessageType.Confirm)

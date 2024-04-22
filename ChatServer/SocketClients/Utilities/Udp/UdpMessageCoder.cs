@@ -2,7 +2,7 @@ using System.Text;
 using ChatServer.Enums;
 using ChatServer.Models;
 
-namespace ChatServer.Utilities.Udp;
+namespace ChatServer.SocketClients.Utilities.Udp;
 
 public class UdpMessageCoder
 {
