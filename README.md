@@ -26,6 +26,8 @@ Executable ```ipk24chat-server``` will be created in the root of the project
 
 Starts a server, that listens on the address 127.0.0.1 with the port 400 and timeout for udp confimation 300 ms
 
+To stop the server all you have to do is to press ctrl-c
+
 ## Implementation
 
 ### Program flow
