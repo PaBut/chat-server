@@ -50,7 +50,13 @@ public class MessageProcessor : IMessageProcessor
             await SendErrorAndBye("Invalid message for current state", cancellationToken);
             return;
         }
-        
+
+        if (message.Arguments.TryGetValue(MessageArguments.DisplayName, out var displayName) &&
+            (string?)displayName != user.DisplayName)
+        {
+            user.DisplayName = (string)displayName;
+        }
+
         switch (message.MessageType)
         {
             case MessageType.Auth:
@@ -196,7 +202,6 @@ public class MessageProcessor : IMessageProcessor
 
         if (success)
         {
-            user.DisplayName = (string)message.Arguments[MessageArguments.DisplayName];
             user.Username = (string)message.Arguments[MessageArguments.UserName];
 
             await ChannelJoin(DefaultChannelName);
@@ -218,6 +223,8 @@ public class MessageProcessor : IMessageProcessor
         {
             await ipkClient.Leave();
         }
-        catch (NotReceivedConfirmException) { }
+        catch (NotReceivedConfirmException)
+        {
+        }
     }
 }
