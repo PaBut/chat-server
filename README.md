@@ -73,14 +73,18 @@ And here are the respective outputs from server logs and wireshark:
 
 ![](wireshark_and_server_output.png)
 
+In addition to it `TcpMessageQueue` class was tested in `ChatClient.UnitTests` project. All possible edge cases were tested there to achieve reliabily while accepting multiple and partial messages. The tests' result are present below:
+
+![](tcpqueuemessage_outputs.png)
+
 ## Bibliography
 
-[2]: Dolejška, D. NESFIT/IPK-Projects-2024 -  IPK-Projects-2024 - FIT - VUT Brno - git [online]. 2024. [cit. 2024-04-01]. Available from: https://git.fit.vutbr.cz/NESFIT/IPK-Projects-2024
+[1]: Dolejška, D. NESFIT/IPK-Projects-2024 -  IPK-Projects-2024 - FIT - VUT Brno - git [online]. 2024. [cit. 2024-04-01]. Available at: https://git.fit.vutbr.cz/NESFIT/IPK-Projects-2024
 
 [2] - Dolejška, D. Server for a chat server using IPK24-CHAT protocol [online]. February 2024. [cited 2024-04-20]. Available at: https://git.fit.vutbr.cz/NESFIT/IPK-Projects-2024/src/branch/master/Project%202/iota
 
-[3]: [Microsoft](https://www.microsoft.com/). \.NET Core [online]. Available fromhttps://learn.microsoft.com/en-us/dotnet
+[3]: [Microsoft](https://www.microsoft.com/). \.NET Core [online]. Available at https://learn.microsoft.com/en-us/dotnet
 
-[4]: [Microsoft](https://www.microsoft.com/). TCP overview[online]. 04/17/2024. Available from https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/sockets/tcp-classes
+[4]: [Microsoft](https://www.microsoft.com/). TCP overview[online]. 04/17/2024. Available at https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/sockets/tcp-classes
 
-[4]: [Microsoft](https://www.microsoft.com/). UdpClient Class[online]. 04/17/2024. Available from https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.udpclient?view=net-8.0
+[5]: [Microsoft](https://www.microsoft.com/). UdpClient Class[online]. 04/17/2024. Available at https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.udpclient?view=net-8.0
