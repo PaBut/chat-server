@@ -15,11 +15,13 @@ public class Logger : ILogger
 
     public void LogReceivedMessage(Message message, IPEndPoint senderEndPoint)
     {
-        stdoutWriter.Write($"RECV {senderEndPoint.Address}:{senderEndPoint.Port} | {message.MessageType}");
+        stdoutWriter.Write(
+            $"RECV {senderEndPoint.Address}:{senderEndPoint.Port} | {message.MessageType.ToString().ToUpper()}");
     }
 
     public void LogSentMessage(Message message, IPEndPoint receiverEndPoint)
     {
-        stdoutWriter.Write($"SENT {receiverEndPoint.Address}:{receiverEndPoint.Port} | {message.MessageType}");
+        stdoutWriter.Write(
+            $"SENT {receiverEndPoint.Address}:{receiverEndPoint.Port} | {message.MessageType.ToString().ToUpper()}");
     }
 }
