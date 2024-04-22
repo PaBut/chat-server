@@ -6,7 +6,7 @@ namespace ChatServer.SocketClients.Utilities.Tcp;
 public class TcpMessageQueue
 {
     private const string CLRF = "\r\n";
-    private Queue<(string message, bool isEnded)> messageQueue = new();
+    private Queue<(string message, bool hasEnd)> messageQueue = new();
     private readonly TcpMessageCoder messageCoder;
 
     public TcpMessageQueue(TcpMessageCoder messageCoder)
@@ -19,11 +19,13 @@ public class TcpMessageQueue
         var messageString = Encoding.UTF8.GetString(encodedMessage);
         var messages = ParseMessages(messageString);
 
-        if (messageQueue.Any() && !messageQueue.Last().isEnded)
+        if (messageQueue.Any() && !messageQueue.Last().hasEnd)
         {
             var lastMessage = messageQueue.Last();
             var firstMessage = messages.First();
-            messageQueue = new Queue<(string message, bool isEnded)>(messageQueue.Take(messageQueue.Count - 1));
+            
+            messageQueue = new Queue<(string message, bool hasEnd)>(messageQueue.Take(messageQueue.Count - 1));
+            
             if (firstMessage.hasEnd)
             {
                 firstMessage.message += CLRF;
