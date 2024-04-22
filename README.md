@@ -12,11 +12,11 @@ make
 Executable ```ipk24chat-server``` will be created in the root of the project
 ### Commandline options
 
-* ```-l``` - Server listening IP address for welcome sockets (default is 0.0.0.0)
-* ```-p``` - Server listening port for welcome sockets (default is 4567)
-* ```-d``` - UDP confirmation timeout (default is 250)
-* ```-r``` - Maximum number of UDP retransmissions (default is 3)
-* ```-h``` - Prints program help output
+* ```-l``` - Server listening IP address for welcome sockets (default is 0.0.0.0);
+* ```-p``` - Server listening port for welcome sockets (default is 4567);
+* ```-d``` - UDP confirmation timeout (default is 250);
+* ```-r``` - Maximum number of UDP retransmissions (default is 3);
+* ```-h``` - Prints program help output.
 
 ### Example of usage
 
@@ -29,6 +29,8 @@ Starts a server, that listens on the address 127.0.0.1 with the port 400 and tim
 To stop the server all you have to do is to press ctrl-c
 
 ## Implementation
+
+The projected was implemented in .NET Core 8.
 
 ### Program flow
 
@@ -44,3 +46,41 @@ In the created `UserClient` object, 3 tasks are created for listening, processin
 
 ## Testing
 
+The testing phase was perfomed using already implemented client from the first IPK project. The project was tested both in Windows and Linux enviroments 
+
+Here's the input and output of both tcp and udp client:
+
+![](clients_output.png)
+
+The tcp client is in right window and its input was:
+```bash
+/auth kyle kyle kyle
+sup
+/join new_channel
+sup here
+```
+
+And the udp client is in left window and the input was:
+```bash
+/auth tom tom tom
+hey
+/join new_channel
+hey here
+<ctrl-c pressed>
+```
+
+And here are the respective outputs from server logs and wireshark:
+
+![](wireshark_and_server_output.png)
+
+## Bibliography
+
+[2]: Dolejška, D. NESFIT/IPK-Projects-2024 -  IPK-Projects-2024 - FIT - VUT Brno - git [online]. 2024. [cit. 2024-04-01]. Available from: https://git.fit.vutbr.cz/NESFIT/IPK-Projects-2024
+
+[2] - Dolejška, D. Server for a chat server using IPK24-CHAT protocol [online]. February 2024. [cited 2024-04-20]. Available at: https://git.fit.vutbr.cz/NESFIT/IPK-Projects-2024/src/branch/master/Project%202/iota
+
+[3]: [Microsoft](https://www.microsoft.com/). \.NET Core [online]. Available fromhttps://learn.microsoft.com/en-us/dotnet
+
+[4]: [Microsoft](https://www.microsoft.com/). TCP overview[online]. 04/17/2024. Available from https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/sockets/tcp-classes
+
+[4]: [Microsoft](https://www.microsoft.com/). UdpClient Class[online]. 04/17/2024. Available from https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.udpclient?view=net-8.0
