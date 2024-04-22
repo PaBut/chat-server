@@ -108,7 +108,10 @@ public class UserClient : IDisposable
                 {
                     var message = await socketClient.Listen(userCancellationToken);
 
-                    internalResponseProcessQueue.Add(message!, userCancellationToken);
+                    if (message != null)
+                    {
+                        internalResponseProcessQueue.Add(message, userCancellationToken);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
